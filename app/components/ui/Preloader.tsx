@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
@@ -18,15 +17,24 @@ const words = [
   "മല്ലു മാജിക്"        // Malayalam 
 ]
 
+// Theme Colors defined for easier management
+const theme = {
+    bgMain: "#F9F8F6",
+    bgSecondary: "#EFE9E3",
+    accent: "#C9B59C",
+    // unused: "#D9CFC7" 
+}
+
 const opacity = {
   initial: {
     opacity: 0,
   },
   enter: {
-    opacity: 0.75,
+    opacity: 1, // Increased opacity slightly for better visibility in light mode
     transition: { duration: 1, delay: 0.2 },
   },
 }
+
 const slideUp = {
   initial: {
     top: 0,
@@ -49,6 +57,13 @@ export default function Preloader({ onComplete }: PreloaderProps) {
 
   useEffect(() => {
     setDimension({ width: window.innerWidth, height: window.innerHeight })
+    
+    // Optional: Handle window resize if necessary, though often overkill for a preloader
+    // const resize = () => {
+    //   setDimension({ width: window.innerWidth, height: window.innerHeight })
+    // }
+    // window.addEventListener("resize", resize)
+    // return () => window.removeEventListener("resize", resize)
   }, [])
 
   useEffect(() => {
@@ -92,7 +107,8 @@ export default function Preloader({ onComplete }: PreloaderProps) {
       variants={slideUp}
       initial="initial"
       animate={isExiting ? "exit" : "initial"}
-      className="fixed inset-0 w-screen h-screen flex items-center justify-center bg-black z-[99999999999]"
+      // Changed bg-black to arbitrary tailwind value for theme.bgMain
+      className={`fixed inset-0 w-screen h-screen flex items-center justify-center bg-[#F9F8F6] z-[99999999999]`}
     >
       {dimension.width > 0 && (
         <>
@@ -100,17 +116,19 @@ export default function Preloader({ onComplete }: PreloaderProps) {
             variants={opacity}
             initial="initial"
             animate="enter"
-            className="flex items-center text-white text-4xl md:text-5xl lg:text-6xl absolute z-10 font-medium"
+            // Changed text-white to arbitrary theme.accent color
+            className="flex items-center text-[#C9B59C] text-4xl md:text-5xl lg:text-6xl absolute z-10 font-medium"
           >
-            <span className="block w-2.5 h-2.5 bg-white rounded-full mr-2.5"></span>
+             {/* Changed dot bg-white to arbitrary theme.accent color */}
+            <span className="block w-2.5 h-2.5 bg-[#C9B59C] rounded-full mr-2.5"></span>
             {words[index]}
           </motion.p>
           <svg className="absolute top-0 w-full h-[calc(100%+300px)]">
-            <motion.path variants={curve} initial="initial" animate={isExiting ? "exit" : "initial"} fill="#070b13" />
+            {/* Changed fill to theme.bgSecondary */}
+            <motion.path variants={curve} initial="initial" animate={isExiting ? "exit" : "initial"} fill="#EFE9E3" />
           </svg>
         </>
       )}
     </motion.div>
   );
 };
-
