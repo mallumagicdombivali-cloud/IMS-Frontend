@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 
 export default function DashboardLayout({
   children,
@@ -125,14 +126,13 @@ export const Logo = () => {
       href="/dashboard"
       className="font-normal flex space-x-2 items-center text-sm text-foreground py-1 relative z-20"
     >
-      <div className="h-6 w-6 bg-camel rounded-lg flex-shrink-0" />
-      <motion.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="font-bold text-lg text-foreground whitespace-pre"
-      >
-        Mallu Magic
-      </motion.span>
+      <Image 
+        src="/images/logo.png" 
+        alt="Mallu Magic Logo" 
+        width={150} 
+        height={100} 
+        className="flex-shrink-0 w-150 h-50 object-contain"
+      />
     </Link>
   );
 };
