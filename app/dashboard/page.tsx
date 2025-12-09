@@ -1,80 +1,112 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Loader2, LogOut } from "lucide-react"; // Optional icons for better UI
+import React, { useEffect, useState } from 'react';
+import DashboardMetricCard from '../components/DashboardMetricCard';
+import { AlertTriangle, Clock, FileText, AlertCircle } from 'lucide-react';
 
-export default function Dashboard() {
-  const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+export default function DashboardPage() {
+  const [stats, setStats] = useState({
+    lowStock: 0,
+    expiring: 0,
+    pendingPR: 0,
+    pendingIssues: 0
+  });
+  const [loading, setLoading] = useState(true);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch all 4 endpoints in parallel
+        const [reorderRes, expiryRes, prRes, issuesRes] = await Promise.all([
+          fetch('/api/system/check-reorder'),
+          fetch('/api/system/check-expiry?days=30'),
+          fetch('/api/pr?status=pending&limit=5'),
+          fetch('/api/issues?status=pending')
+        ]);
 
-    try {
-      // 1. Call the backend to invalidate the session/token
-      // We use the proxy path we set up earlier
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        // If your backend needs the token in the body or header, add it here.
-        // Usually, cookies are sent automatically, or Authorization header if needed:
-        // headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-      });
-    } catch (error) {
-      console.error("Logout API call failed:", error);
-      // We continue to clear client data even if server call fails
-    } finally {
-      // 2. Delete the auth cookie
-      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-      
-      // 3. Clear localStorage
-      localStorage.clear();
-      
-      // 4. Redirect to login
-      router.push("/login");
-    }
-  };
+        const reorderData = await reorderRes.json();
+        const expiryData = await expiryRes.json();
+        const prData = await prRes.json();
+        const issuesData = await issuesRes.json();
+
+        setStats({
+          lowStock: reorderData.data?.count || 0,
+          expiring: expiryData.data?.summary?.expiringCount || 0,
+          pendingPR: prData.data?.pagination?.total || prData.data?.length || 0,
+          pendingIssues: issuesData.data?.pagination?.total || issuesData.data?.length || 0,
+        });
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   return (
-    <div className="min-h-screen p-8 bg-background text-foreground font-sans">
-      <div className="max-w-4xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-camel">Dashboard</h1>
-          
-          <button 
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isLoggingOut ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Logging out...
-              </>
-            ) : (
-              <>
-                <LogOut className="h-4 w-4" />
-                Log Out
-              </>
-            )}
-          </button>
+    <div className="w-full max-w-7xl mx-auto space-y-8">
+      <div>
+        <h2 className="text-3xl font-bold text-camel">Overview</h2>
+        <p className="text-gray-500 mt-2">Welcome back. Here is what needs your attention today.</p>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 1. Low Stock Card */}
+        <DashboardMetricCard
+          loading={loading}
+          title="Low Stock Items"
+          value={stats.lowStock}
+          icon={AlertTriangle}
+          trendChange={stats.lowStock > 0 ? "Action Required" : "Healthy"}
+          trendType={stats.lowStock > 0 ? "down" : "up"} 
+        />
+
+        {/* 2. Expiring Soon Card */}
+        <DashboardMetricCard
+          loading={loading}
+          title="Expiring (30 Days)"
+          value={stats.expiring}
+          icon={Clock}
+          trendChange={stats.expiring > 0 ? "Check Batch" : "No Issues"}
+          trendType={stats.expiring > 0 ? "down" : "neutral"}
+        />
+
+        {/* 3. Pending PRs Card */}
+        <DashboardMetricCard
+          loading={loading}
+          title="Pending PRs"
+          value={stats.pendingPR}
+          icon={FileText}
+          trendChange="Awaiting Approval"
+          trendType="neutral"
+        />
+
+        {/* 4. Pending Issues Card */}
+        <DashboardMetricCard
+          loading={loading}
+          title="Pending Issues"
+          value={stats.pendingIssues}
+          icon={AlertCircle}
+          trendChange="Needs Action"
+          trendType={stats.pendingIssues > 0 ? "down" : "neutral"}
+        />
+      </div>
+
+      {/* Placeholders for future Charts/Tables */}
+      <div className="grid gap-6 md:grid-cols-2 h-96">
+        <div className="rounded-xl border border-taupe bg-white/50 p-6">
+            <h3 className="text-lg font-medium text-camel mb-4">Stock Valuation</h3>
+            <div className="h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-taupe rounded-lg">
+                Chart Placeholder
+            </div>
         </div>
-        
-        <div className="p-6 rounded-2xl border border-taupe bg-foreground/5 backdrop-blur-sm">
-          <h2 className="text-xl font-medium text-camel mb-2">Welcome to the protected area!</h2>
-          <p className="text-muted-foreground">
-            You are now authenticated. This page is protected by Middleware.
-          </p>
-          
-          {/* Example of retrieving user data */}
-          <div className="mt-6 p-4 bg-background/50 rounded-xl border border-white/10">
-            <p className="text-sm font-mono text-gray-500">
-              Session Active
-            </p>
-          </div>
+        <div className="rounded-xl border border-taupe bg-white/50 p-6">
+            <h3 className="text-lg font-medium text-camel mb-4">Recent Activity</h3>
+            <div className="h-full flex items-center justify-center text-gray-400 border-2 border-dashed border-taupe rounded-lg">
+                List Placeholder
+            </div>
         </div>
       </div>
     </div>

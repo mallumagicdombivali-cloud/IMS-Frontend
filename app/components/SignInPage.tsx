@@ -55,8 +55,8 @@ const TestimonialCard = ({ testimonial, delay }: { testimonial: Testimonial, del
 
 // --- MAIN COMPONENT ---
 export const SignInPage: React.FC<SignInPageProps> = ({
-    title = <span className="font-light text-foreground tracking-tighter">Welcome</span>,
-    description = "Access your account and continue your journey with us",
+    title = <span className="font-light text-foreground tracking-tighter">Welcome Admin</span>,
+    description = "Access your account and continue your journey",
     heroImageSrc,
     testimonials = [],
     onSignIn,
@@ -128,10 +128,10 @@ export const SignInPage: React.FC<SignInPageProps> = ({
                         </form>
 
                         <div className="animate-element animate-delay-700 relative flex items-center justify-center"></div>
-
+{/* 
                         <p className="animate-element animate-delay-900 text-center text-sm text-muted-foreground">
                             New to our platform? <a href="#" onClick={(e) => { e.preventDefault(); onCreateAccount?.(); }} className="text-camel hover:text-foreground hover:underline transition-colors">Create Account</a>
-                        </p>
+                        </p> */}
                     </div>
                 </div>
             </section>

@@ -13,7 +13,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       {/* We removed the variable class. Just keep standard classes here. */}
-      <body className="antialiased">
+      <body suppressHydrationWarning={true} className="antialiased">
         {children}
       </body>
     </html>
