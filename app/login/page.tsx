@@ -43,8 +43,9 @@ export default function LoginPage() {
         // --- CRITICAL CHANGE: SET COOKIE ---
         // Middleware can only read Cookies, not LocalStorage.
         // We set a cookie named 'token' that expires in 1 day (86400s).
-        document.cookie = `token=${data.data.token}; path=/; max-age=86400; SameSite=Strict`;
-        
+        // Explicitly set path=/ so /dashboard/inventory can see it
+        document.cookie = `token=${data.data.token}; path=/; max-age=86400; SameSite=Lax`;
+        localStorage.setItem("token", data.data.token);
         // Optional: Still keep localStorage for client-side access if needed
         localStorage.setItem("user", JSON.stringify(data.data.user));
 

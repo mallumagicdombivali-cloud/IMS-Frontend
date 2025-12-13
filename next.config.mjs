@@ -3,8 +3,8 @@ const nextConfig = {
   async rewrites() {
     return [
       {
-        source: '/api/:path*', // When you request /api/...
-        destination: 'https://ims-backend-pied.vercel.app/api/:path*', // Send it here
+        source: '/api/:path*',
+        destination: 'http://localhost:3000/api/:path*',
       },
     ];
   },
