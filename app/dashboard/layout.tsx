@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "../components/ui/sidebar";
 import { 
   LayoutDashboard, 
@@ -37,39 +37,78 @@ export default function DashboardLayout({
     router.push("/login");
   };
 
-  // Main Navigation Links
-  const links = [
-    {
-      label: "Dashboard",
-      href: "/dashboard",
-      icon: <LayoutDashboard className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Inventory",
-      href: "/dashboard/inventory/items",
-      icon: <Package className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Procurement",
-      href: "/dashboard/procurement/po",
-      icon: <ShoppingCart className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Operations",
-      href: "/dashboard/operations/issues",
-      icon: <Truck className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Reports",
-      href: "/dashboard/reports",
-      icon: <FileText className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
-    },
-    {
-      label: "Admin",
-      href: "/dashboard/admin/users",
-      icon: <Users className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
-    },
-  ];
+  // Role-aware navigation links
+  const [role, setRole] = useState<string | null>(null);
+  useEffect(() => {
+    // Prefer localStorage cached role
+    const r = typeof window !== 'undefined' ? localStorage.getItem('role') : null;
+    if (r) {
+      setRole(r);
+      return;
+    }
+
+    // Fallback to /api/auth/me
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/me');
+        if (!res.ok) return;
+        const d = await res.json();
+        setRole(d?.data?.user?.role || null);
+      } catch (err) {
+        // ignore
+      }
+    })();
+  }, []);
+
+  const links = React.useMemo(() => {
+    // Default common links
+    const base = [
+      {
+        label: "Dashboard",
+        href: "/dashboard",
+        icon: <LayoutDashboard className="text-neutral-700 h-5 w-5 shrink-0" />,
+      },
+    ];
+
+    // Inventory: visible to most roles
+    base.push({ label: "Inventory", href: "/dashboard/inventory/items", icon: <Package className="text-neutral-700 h-5 w-5 shrink-0" /> });
+
+    // Role specific additions
+    if (role === 'admin') {
+      base.push({ label: "Procurement", href: "/dashboard/procurement/po", icon: <ShoppingCart className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Operations", href: "/dashboard/operations/issues", icon: <Truck className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Reports", href: "/dashboard/reports", icon: <FileText className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Admin Console", href: "/dashboard/admin", icon: <Users className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Admin", href: "/dashboard/admin/users", icon: <Users className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      return base;
+    }
+
+    if (role === 'storekeeper') {
+      base.push({ label: "Procurement (GRN)", href: "/dashboard/procurement/grn/new", icon: <ShoppingCart className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Operations", href: "/dashboard/operations/issues", icon: <Truck className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Reports", href: "/dashboard/reports", icon: <FileText className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      return base;
+    }
+
+    if (role === 'hod') {
+      base.push({ label: "Procurement (PR)", href: "/dashboard/procurement/pr", icon: <ShoppingCart className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Operations", href: "/dashboard/operations/issues", icon: <Truck className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Reports", href: "/dashboard/reports", icon: <FileText className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      return base;
+    }
+
+    if (role === 'accounts') {
+      base.push({ label: "Procurement", href: "/dashboard/procurement/po", icon: <ShoppingCart className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      base.push({ label: "Reports", href: "/dashboard/reports", icon: <FileText className="text-neutral-700 h-5 w-5 shrink-0" /> });
+      return base;
+    }
+
+    // Default fallback for anonymous or unknown roles
+    base.push({ label: "Procurement", href: "/dashboard/procurement/po", icon: <ShoppingCart className="text-neutral-700 h-5 w-5 shrink-0" /> });
+    base.push({ label: "Operations", href: "/dashboard/operations/issues", icon: <Truck className="text-neutral-700 h-5 w-5 shrink-0" /> });
+    base.push({ label: "Reports", href: "/dashboard/reports", icon: <FileText className="text-neutral-700 h-5 w-5 shrink-0" /> });
+    return base;
+  }, [role]);
 
   return (
     <div className="flex flex-col md:flex-row bg-background w-full h-screen overflow-hidden font-sans">
@@ -93,7 +132,7 @@ export default function DashboardLayout({
               link={{
                 label: "Settings",
                 href: "/dashboard/settings",
-                icon: <Settings className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
+                icon: <Settings className="text-neutral-700 h-5 w-5 shrink-0" />,
               }}
             />
             
@@ -102,7 +141,7 @@ export default function DashboardLayout({
               link={{
                 label: "Logout",
                 href: "#", // Ignored because onClick is present
-                icon: <LogOut className="text-neutral-700 h-5 w-5 flex-shrink-0" />,
+                icon: <LogOut className="text-neutral-700 h-5 w-5 shrink-0" />,
                 onClick: handleLogout, 
               }}
             />
@@ -131,7 +170,7 @@ export const Logo = () => {
         alt="Mallu Magic Logo" 
         width={150} 
         height={100} 
-        className="flex-shrink-0 w-150 h-50 object-contain"
+        className="shrink-0 w-150 h-50 object-contain"
       />
     </Link>
   );
