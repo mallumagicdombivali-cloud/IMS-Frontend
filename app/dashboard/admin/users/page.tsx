@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { apiFetch } from '../../../../components/lib/api';
+import { apiFetch } from '../../../components/lib/api';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);

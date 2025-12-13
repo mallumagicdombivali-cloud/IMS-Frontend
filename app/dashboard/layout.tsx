@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { apiFetch } from "../components/lib/api";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 
@@ -26,15 +27,30 @@ export default function DashboardLayout({
   const router = useRouter();
 
   // Handle Logout Logic
-  const handleLogout = () => {
-    // 1. Clear the auth cookie
-    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
-    
-    // 2. Clear local storage
-    localStorage.clear();
-    
-    // 3. Redirect to login
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      // Call backend logout to clear refresh tokens server-side (ensure cookies included)
+      const res = await apiFetch('/api/auth/logout', { method: 'POST', credentials: 'include' as RequestCredentials });
+      if (!res.ok) {
+        const text = await res.text().catch(()=>undefined);
+        console.warn('Logout failed:', res.status, text);
+      }
+    } catch (err) {
+      console.error('Logout request failed', err);
+    } finally {
+      // Clear client-side cookies and local storage items
+      document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+      } catch (e) {
+        // ignore
+      }
+
+      // Replace history to login page to prevent back navigation
+      router.replace('/login');
+    }
   };
 
   // Role-aware navigation links
